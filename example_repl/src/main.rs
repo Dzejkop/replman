@@ -1,26 +1,34 @@
 use replman::prelude::*;
 
-#[derive(Debug, Clone, ReplCmd)]
+#[derive(PartialEq, Debug, ReplCmd)]
 #[replman(rename_all = "snake_case")]
-enum Cmd {
-    Quit,
+pub enum Command {
+    /// Displays help
     Help,
-    Add(i64, i64),
-    Addf(f64, f64),
+    /// Exits the program
+    ///
+    /// make sure to use it
+    Quit,
+    NamedArgs {
+        left: usize,
+        right: usize,
+    },
+    UnnamedArgs(usize, usize),
+    OptionalArg {
+        first_arg: String,
+        optional_arg: Option<u32>,
+    },
+    WithDefaultValue {
+        #[replman(default)]
+        with_default_value: u32,
+    },
+    WithDefaultExplicit {
+        #[replman(default = "42")]
+        with_default_explicit: u32,
+    },
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    loop {
-        let cmd: Cmd = read_command()?;
-
-        match cmd {
-            Cmd::Quit => break,
-            Cmd::Help => println!("{}", Cmd::help()),
-            Cmd::Add(a, b) => println!("{}", a + b),
-            Cmd::Addf(a, b) => println!("{}", a + b),
-        }
-    }
-
     Ok(())
 }
