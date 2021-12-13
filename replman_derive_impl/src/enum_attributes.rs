@@ -29,7 +29,7 @@ fn str_to_case(s: &str) -> Case {
 
 fn iter_over_attrs(input_attrs: &[Attribute], ret: &mut EnumAttributes) {
     for attr in input_attrs {
-        if &attr.path == &syn::parse_quote!(replman) {
+        if attr.path == syn::parse_quote!(replman) {
             let meta = attr.parse_meta().expect("Invalid arguments");
 
             match meta {
@@ -46,18 +46,15 @@ fn iter_over_attrs(input_attrs: &[Attribute], ret: &mut EnumAttributes) {
 
 fn try_extract_rename_all(nested: &syn::NestedMeta, ret: &mut EnumAttributes) {
     match nested {
-        syn::NestedMeta::Meta(nested_meta) => match nested_meta {
-            syn::Meta::NameValue(meta_name_value) => {
-                if &meta_name_value.path == &syn::parse_quote!(rename_all) {
-                    if let Lit::Str(lit_str) = &meta_name_value.lit {
-                        ret.rename_all = Some(str_to_case(&lit_str.value()));
-                    } else {
-                        panic!("Invalid");
-                    }
+        syn::NestedMeta::Meta(syn::Meta::NameValue(meta_name_value)) => {
+            if meta_name_value.path == syn::parse_quote!(rename_all) {
+                if let Lit::Str(lit_str) = &meta_name_value.lit {
+                    ret.rename_all = Some(str_to_case(&lit_str.value()));
+                } else {
+                    panic!("Invalid");
                 }
             }
-            _ => panic!("Unsupported"),
-        },
+        }
         _ => panic!("Unsupported"),
     }
 }

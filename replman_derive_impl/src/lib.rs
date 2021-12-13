@@ -1,10 +1,12 @@
-use crate::enum_attributes::EnumAttributes;
-use crate::field_attributes::FieldAttributes;
+#![allow(clippy::useless_conversion)]
+
 use convert_case::Casing;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::parse_quote;
-use syn::{Arm, DeriveInput, Fields};
+use syn::{parse_quote, Arm, DeriveInput, Fields};
+
+use crate::enum_attributes::EnumAttributes;
+use crate::field_attributes::FieldAttributes;
 
 mod enum_attributes;
 mod field_attributes;
@@ -27,11 +29,12 @@ pub fn derive_repl_cmd_impl(input: DeriveInput) -> TokenStream {
                 ""
             }
 
-            fn parse(s: &str) -> anyhow::Result<Self>
+            fn parse<'a, I>(mut parts: I) -> anyhow::Result<Self>
             where
-                Self: Sized {
-                let mut parts = s.split(' ');
-                let cmd_word = parts.next().unwrap();
+                Self: Sized,
+                I: Iterator<Item = anyhow::Result<&'a str>> + 'a
+            {
+                let cmd_word = parts.next().unwrap()?;
 
                 match cmd_word {
                     #(#variant_matches)*
@@ -40,8 +43,6 @@ pub fn derive_repl_cmd_impl(input: DeriveInput) -> TokenStream {
             }
         }
     };
-
-    println!("{}", output);
 
     output.into()
 }
@@ -66,14 +67,14 @@ fn variant_matches<'a>(
 
                     match field_attributes.default {
                         field_attributes::FieldDefault::None => quote! {
-                            #ident: ::replman::ReplCmdParse::parse(parts.next())?,
+                            #ident: ::replman::ReplCmdParse::parse(parts.next().transpose()?)?,
                         },
                         field_attributes::FieldDefault::Some(default_value) => quote! {
-                            #ident: ::replman::ReplCmdParse::parse_default(parts.next().unwrap_or(#default_value))?,
+                            #ident: ::replman::ReplCmdParse::parse_default(parts.next().transpose()?.unwrap_or(#default_value))?,
                         },
                         field_attributes::FieldDefault::Default => quote! {
                             #ident: match parts.next() {
-                                Some(s) => ::replman::ReplCmdParse::parse_default(s)?,
+                                Some(s) => ::replman::ReplCmdParse::parse_default(s?)?,
                                 None => Default::default(),
                             },
                         },
@@ -96,7 +97,7 @@ fn variant_matches<'a>(
             Fields::Unnamed(unnamed) => {
                 let field_parses = unnamed.unnamed.iter().map(|_| {
                     quote! {
-                        ::replman::ReplCmdParse::parse(parts.next())?,
+                        ::replman::ReplCmdParse::parse(parts.next().transpose()?)?,
                     }
                 });
 

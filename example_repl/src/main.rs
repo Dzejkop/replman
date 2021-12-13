@@ -30,5 +30,16 @@ pub enum Command {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let mut repl = Repl::new();
+    loop {
+        let command: Command = repl.read_command()?;
+
+        match command {
+            Command::Help => println!("A!"),
+            Command::Quit => break,
+            cmd => println!("{:?}", cmd),
+        }
+    }
+
     Ok(())
 }

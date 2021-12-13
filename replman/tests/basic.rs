@@ -19,14 +19,17 @@ enum Command {
         first_arg: String,
         optional_arg: Option<u32>,
     },
+    /// A command with a single argument that has a default (type based) value
     WithDefaultValue {
         #[replman(default)]
         with_default_value: u32,
     },
+    /// A command with a single argument that has a default value
     WithDefaultExplicit {
         #[replman(default = "42")]
         with_default_explicit: u32,
     },
+    Str(String),
 }
 
 #[test]
@@ -47,14 +50,14 @@ fn help_test() {
 
 #[test]
 fn named_args() {
-    let cmd = Command::parse("named_args 1 2").unwrap();
+    let cmd = Command::parse_str("named_args 1 2").unwrap();
 
     assert_eq!(Command::NamedArgs { left: 1, right: 2 }, cmd);
 }
 
 #[test]
 fn unnamed_args() {
-    let cmd = Command::parse("unnamed_args 1 2").unwrap();
+    let cmd = Command::parse_str("unnamed_args 1 2").unwrap();
 
     assert_eq!(Command::UnnamedArgs(1, 2), cmd);
 }
@@ -66,7 +69,7 @@ fn unnamed_args() {
     first_arg: "World".to_string(), optional_arg: Some(1)
 } ; "optional set")]
 fn optional_arg(s: &str, exp: Command) {
-    let cmd = Command::parse(s).unwrap();
+    let cmd = Command::parse_str(s).unwrap();
     assert_eq!(exp, cmd);
 }
 
@@ -77,7 +80,7 @@ fn optional_arg(s: &str, exp: Command) {
     with_default_value: 24,
 } ; "default override")]
 fn with_default_value(s: &str, exp: Command) {
-    let cmd = Command::parse(s).unwrap();
+    let cmd = Command::parse_str(s).unwrap();
     assert_eq!(exp, cmd);
 }
 
@@ -88,6 +91,15 @@ fn with_default_value(s: &str, exp: Command) {
     with_default_explicit: 24,
 }; "default explicit override")]
 fn with_default_explicit(s: &str, exp: Command) {
-    let cmd = Command::parse(s).unwrap();
+    let cmd = Command::parse_str(s).unwrap();
+    assert_eq!(exp, cmd);
+}
+
+#[test_case("str \"Hello, World!\"", Command::Str("Hello, World!".to_string()) ; "double quotes")]
+#[test_case("str 'Hello, World!'", Command::Str("Hello, World!".to_string()) ; "single quotes")]
+#[test_case("str \"'Hello', World!\"", Command::Str("'Hello', World!".to_string()) ; "single quotes within double")]
+#[test_case("str \"\"", Command::Str("".to_string()) ; "empty str")]
+fn escape_strings(s: &str, exp: Command) {
+    let cmd = Command::parse_str(s).unwrap();
     assert_eq!(exp, cmd);
 }
