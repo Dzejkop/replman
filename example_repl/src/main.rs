@@ -4,11 +4,13 @@ use replman::prelude::*;
 #[replman(rename_all = "snake_case")]
 pub enum Command {
     /// Displays help
+    #[replman(alias = "h")]
     Help,
     /// Exits the program
     ///
     /// make sure to use it
     #[replman(alias = "exit")]
+    #[replman(alias = "q")]
     Quit,
     NamedArg {
         left: usize,
@@ -36,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
         let command: Command = repl.read_command()?;
 
         match command {
-            Command::Help => println!("A!"),
+            Command::Help => println!("{}", Command::help()),
             Command::Quit => break,
             cmd => println!("{:?}", cmd),
         }
