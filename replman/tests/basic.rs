@@ -10,6 +10,7 @@ enum Command {
     /// Exits the program
     ///
     /// make sure to use it
+    #[replman(alias = "exit")]
     Quit,
     NamedArgs {
         left: usize,
@@ -38,9 +39,9 @@ enum Command {
 fn help_test() {
     const HELP: &str = indoc::indoc! {r#"
         help - Displays help
-        quit - Exits the program
+        quit|exit - Exits the program
 
-               make sure to use it
+                    make sure to use it
         named_args
         unnamed_args
         optional_arg

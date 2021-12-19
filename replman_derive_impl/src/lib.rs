@@ -23,8 +23,8 @@ pub fn derive_repl_cmd_impl(input: DeriveInput) -> TokenStream {
         _ => panic!("Can only derive ReplCmd for enums"),
     };
 
-    let help_impl = derive_help_method(&data_enum, &attrs);
-    let parse_impl = derive_parse_method(&data_enum, &attrs);
+    let help_impl = derive_help_method(data_enum, &attrs);
+    let parse_impl = derive_parse_method(data_enum, &attrs);
 
     let output = quote! {
         impl ReplCmd for #ty {
@@ -33,5 +33,5 @@ pub fn derive_repl_cmd_impl(input: DeriveInput) -> TokenStream {
         }
     };
 
-    output.into()
+    output
 }

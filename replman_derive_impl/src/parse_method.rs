@@ -4,12 +4,13 @@ use syn::{parse_quote, Arm, DataEnum, Fields};
 use crate::common::effective_variant_name;
 use crate::enum_attributes::EnumAttributes;
 use crate::field_attributes::{self, FieldAttributes};
+use crate::variant_attributes::VariantAttributes;
 
 pub fn derive_parse_method(
     data_enum: &DataEnum,
     attrs: &EnumAttributes,
 ) -> syn::ImplItemMethod {
-    let variant_matches = variant_matches(&data_enum, &attrs);
+    let variant_matches = variant_matches(data_enum, attrs);
 
     let parse_impl: syn::ImplItemMethod = syn::parse_quote! {
         fn parse<'a, I>(mut parts: I) -> anyhow::Result<Self>
@@ -35,7 +36,10 @@ fn variant_matches<'a>(
 ) -> impl Iterator<Item = Arm> + 'a {
     data_enum.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
-        let variant_name_str = effective_variant_name(&variant, attrs);
+        let variant_attributes = VariantAttributes::extract(&variant.attrs);
+        let effective_variant_name = effective_variant_name(variant, attrs, &variant_attributes);
+        // TODO: Handle aliases
+        let effective_variant_name = effective_variant_name.main_name;
 
         match &variant.fields {
             Fields::Named(named) => {
@@ -61,7 +65,7 @@ fn variant_matches<'a>(
                 });
 
                 parse_quote! {
-                    #variant_name_str => {
+                    #effective_variant_name => {
                         Ok(Self::#variant_name {
                             #(#field_parses)*
                         })
@@ -70,7 +74,7 @@ fn variant_matches<'a>(
             }
             Fields::Unit => {
                 parse_quote! {
-                    #variant_name_str => { Ok(Self::#variant_name) }
+                    #effective_variant_name => { Ok(Self::#variant_name) }
                 }
             }
             Fields::Unnamed(unnamed) => {
@@ -81,7 +85,7 @@ fn variant_matches<'a>(
                 });
 
                 parse_quote! {
-                    #variant_name_str => {
+                    #effective_variant_name => {
                         Ok(Self::#variant_name(
                             #(#field_parses)*
                         ))
