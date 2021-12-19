@@ -4,6 +4,7 @@ use syn::{parse_quote, Attribute, Lit, LitStr};
 pub struct VariantAttributes {
     pub aliases: Vec<LitStr>,
     pub doc_lines: Vec<LitStr>,
+    pub starts_withs: Vec<LitStr>,
 }
 
 impl VariantAttributes {
@@ -59,7 +60,14 @@ fn extract_replman(nested: &syn::NestedMeta, ret: &mut VariantAttributes) {
                 if let Lit::Str(lit_str) = &name_value.lit {
                     ret.aliases.push(lit_str.clone());
                 } else {
-                    panic!("Invalid literal");
+                    panic!("Invalid alias literal");
+                }
+            }
+            if name_value.path == parse_quote!(starts_with) {
+                if let Lit::Str(lit_str) = &name_value.lit {
+                    ret.starts_withs.push(lit_str.clone());
+                } else {
+                    panic!("Invalid starts_with literal");
                 }
             }
         }

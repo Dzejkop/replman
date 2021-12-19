@@ -11,7 +11,10 @@ enum Command {
     ///
     /// make sure to use it
     #[replman(alias = "exit")]
+    #[replman(starts_with = "q")]
     Quit,
+    /// Just here to mess with quit starts_with
+    Quote,
     NamedArgs {
         left: usize,
         right: usize,
@@ -39,9 +42,10 @@ enum Command {
 fn help_test() {
     const HELP: &str = indoc::indoc! {r#"
         help - Displays help
-        quit|exit - Exits the program
+        quit|exit|q.. - Exits the program
 
-                    make sure to use it
+                        make sure to use it
+        quote - Just here to mess with quit starts_with
         named_args <left> <right>
         unnamed_args <0> <1>
         optional_arg <first_arg> <optional_arg>
@@ -54,12 +58,22 @@ fn help_test() {
     assert_diff!(HELP, Command::help(), "", 0);
 }
 
+#[test_case("q")]
+#[test_case("qu")]
+#[test_case("qui")]
 #[test_case("quit")]
 #[test_case("exit")]
 fn handles_aliases(s: &str) {
     let cmd = Command::parse_str(s).unwrap();
 
     assert_eq!(Command::Quit, cmd);
+}
+
+#[test]
+fn starts_with_is_handled_last() {
+    let cmd = Command::parse_str("quote").unwrap();
+
+    assert_eq!(Command::Quote, cmd);
 }
 
 #[test]

@@ -9,6 +9,7 @@ use crate::variant_attributes::VariantAttributes;
 pub struct EffectiveVariantName {
     pub main_name: LitStr,
     pub aliases: Vec<LitStr>,
+    pub start_withs: Vec<LitStr>,
 }
 
 impl fmt::Display for EffectiveVariantName {
@@ -16,6 +17,10 @@ impl fmt::Display for EffectiveVariantName {
         write!(f, "{}", self.main_name.value())?;
         for alias in &self.aliases {
             write!(f, "|{}", alias.value())?;
+        }
+
+        for starts_with in &self.start_withs {
+            write!(f, "|{}..", starts_with.value())?;
         }
 
         Ok(())
@@ -38,5 +43,6 @@ pub fn effective_variant_name(
     EffectiveVariantName {
         main_name,
         aliases: variant_attrs.aliases.clone(),
+        start_withs: variant_attrs.starts_withs.clone(),
     }
 }

@@ -10,7 +10,11 @@ pub fn derive_parse_method(
     data_enum: &DataEnum,
     attrs: &EnumAttributes,
 ) -> syn::ImplItemMethod {
-    let variant_matches = variant_matches(data_enum, attrs);
+    let VariantMatches {
+        exact_matches,
+        aliases,
+        start_with_matches,
+    } = variant_matches(data_enum, attrs);
 
     let parse_impl: syn::ImplItemMethod = syn::parse_quote! {
         fn parse<'a, I>(mut parts: I) -> anyhow::Result<Self>
@@ -21,7 +25,9 @@ pub fn derive_parse_method(
             let cmd_word = parts.next().unwrap()?;
 
             match cmd_word {
-                #(#variant_matches)*
+                #(#exact_matches)*
+                #(#aliases)*
+                #(#start_with_matches)*
                 cmd => Err(anyhow::anyhow!("unrecognized command '{}'", cmd)),
             }
         }
@@ -30,24 +36,28 @@ pub fn derive_parse_method(
     parse_impl
 }
 
-fn variant_matches<'a>(
-    data_enum: &'a syn::DataEnum,
-    attrs: &'a EnumAttributes,
-) -> impl Iterator<Item = Arm> + 'a {
-    data_enum.variants.iter().map(|variant| {
+#[derive(Default)]
+struct VariantMatches {
+    exact_matches: Vec<Arm>,
+    aliases: Vec<Arm>,
+    start_with_matches: Vec<Arm>,
+}
+
+fn variant_matches(
+    data_enum: &syn::DataEnum,
+    attrs: &EnumAttributes,
+) -> VariantMatches {
+    let mut variant_matches = VariantMatches::default();
+
+    for variant in data_enum.variants.iter() {
         let variant_name = &variant.ident;
         let variant_attributes = VariantAttributes::extract(&variant.attrs);
-        let effective_variant_name = effective_variant_name(variant, attrs, &variant_attributes);
+        let effective_variant_name =
+            effective_variant_name(variant, attrs, &variant_attributes);
 
         let main_name = &effective_variant_name.main_name;
-        let variant_match = if effective_variant_name.aliases.is_empty() {
-            quote!(#main_name)
-        } else {
-            let aliases = &effective_variant_name.aliases;
-            quote!(#main_name | #(#aliases)|*)
-        };
 
-        match &variant.fields {
+        let variant_body: syn::Expr = match &variant.fields {
             Fields::Named(named) => {
                 let field_parses = named.named.iter().map(|field| {
                     let ident = field.ident.as_ref().unwrap();
@@ -71,16 +81,12 @@ fn variant_matches<'a>(
                 });
 
                 parse_quote! {
-                    #variant_match => {
-                        Ok(Self::#variant_name {
-                            #(#field_parses)*
-                        })
-                    }
+                    { Ok(Self::#variant_name { #(#field_parses)* }) }
                 }
             }
             Fields::Unit => {
                 parse_quote! {
-                    #variant_match => { Ok(Self::#variant_name) }
+                    { Ok(Self::#variant_name) }
                 }
             }
             Fields::Unnamed(unnamed) => {
@@ -91,13 +97,29 @@ fn variant_matches<'a>(
                 });
 
                 parse_quote! {
-                    #variant_match => {
-                        Ok(Self::#variant_name(
-                            #(#field_parses)*
-                        ))
-                    }
+                    { Ok(Self::#variant_name(#(#field_parses)*)) }
                 }
             }
-        }
-    })
+        };
+
+        variant_matches
+            .exact_matches
+            .push(parse_quote!( #main_name => #variant_body ));
+
+        variant_matches.aliases.extend(
+            effective_variant_name
+                .aliases
+                .iter()
+                .map(|alias| parse_quote!( #alias => #variant_body )),
+        );
+
+        variant_matches.start_with_matches.extend(
+            effective_variant_name
+                .start_withs
+                .iter()
+                .map(|starts_with| parse_quote!( cmd if cmd.starts_with(#starts_with) => #variant_body ))
+        );
+    }
+
+    variant_matches
 }
