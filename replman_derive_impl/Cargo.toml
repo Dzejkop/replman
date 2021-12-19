@@ -2,8 +2,14 @@
 name = "replman_derive_impl"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+repository = "https://github.com/Dzejkop/replman"
+authors = ["Jakub Trąd <jakubtrad@gmail.com>"]
+description = "An opinionated REPL framework"
+documentation = "https://docs.rs/replman"
+categories = ["repl", "command line"]
+keywords = ["repl", "replman", "rustyline"]
+include = ["../README.md", "../LICENSE"]
 
 [dependencies]
 proc-macro2 = "1.0"
