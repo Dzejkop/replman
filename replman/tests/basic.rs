@@ -1,3 +1,4 @@
+use difference::assert_diff;
 use replman::prelude::*;
 use test_case::test_case;
 
@@ -35,17 +36,19 @@ enum Command {
 #[test]
 fn help_test() {
     const HELP: &str = indoc::indoc! {r#"
-        h|help - displays help
+        help - Displays help
         quit - Exits the program
 
                make sure to use it
-        named_args <left> <right>
-        unnamed_args <0> <1>
-        echo <name>
-        send_echo_request <job_address> <value>
+        named_args
+        unnamed_args
+        optional_arg
+        with_default_value - A command with a single argument that has a default (type based) value
+        with_default_explicit - A command with a single argument that has a default value
+        str
     "#};
 
-    assert_eq!(HELP, Command::help());
+    assert_diff!(HELP, Command::help(), "", 0);
 }
 
 #[test]

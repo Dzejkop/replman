@@ -13,3 +13,5 @@ rustyline = "9.1"
 [dev-dependencies]
 indoc = "1.0"
 test-case = "1.2"
+pretty_assertions = "1.0.0"
+difference = "2.0.0"

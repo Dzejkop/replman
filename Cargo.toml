@@ -1,2 +1,7 @@
 [workspace]
-members = ["example_repl", "replman", "replman_derive", "replman_derive_impl"]
+members = [
+    "example_repl",
+    "replman",
+    "replman_derive",
+    "replman_derive_impl",
+]

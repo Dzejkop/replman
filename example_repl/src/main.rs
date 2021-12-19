@@ -9,7 +9,7 @@ pub enum Command {
     ///
     /// make sure to use it
     Quit,
-    NamedArgs {
+    NamedArg {
         left: usize,
         right: usize,
     },
