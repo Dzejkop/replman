@@ -12,7 +12,7 @@ keywords = ["repl", "replman", "rustyline"]
 include = ["../README.md", "../LICENSE"]
 
 [lib]
-path = "lib.rs"
+path = "src/lib.rs"
 
 [dependencies]
 proc-macro2 = "1.0"
