@@ -10,10 +10,9 @@ documentation = "https://docs.rs/replman"
 categories = ["repl", "command line"]
 keywords = ["repl", "replman", "rustyline"]
 readme = "../README.md"
-include = ["../README.md", "../LICENSE"]
 
 [dependencies]
-replman_derive = { path = "../replman_derive" }
+replman_derive = "0.1.0"
 anyhow = "1.0"
 rustyline = "9.1"
 

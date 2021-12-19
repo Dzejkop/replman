@@ -9,10 +9,6 @@ description = "An opinionated REPL framework"
 documentation = "https://docs.rs/replman"
 categories = ["repl", "command line"]
 keywords = ["repl", "replman", "rustyline"]
-include = ["../README.md", "../LICENSE"]
-
-[lib]
-path = "src/lib.rs"
 
 [dependencies]
 proc-macro2 = "1.0"

@@ -9,11 +9,10 @@ description = "An opinionated REPL framework"
 documentation = "https://docs.rs/replman"
 categories = ["repl", "command line"]
 keywords = ["repl", "replman", "rustyline"]
-include = ["../README.md", "../LICENSE"]
 
 [lib]
 proc-macro = true
 
 [dependencies]
-replman_derive_impl = { path = "../replman_derive_impl" }
+replman_derive_impl = "0.1.0"
 syn = { version = "1.0", features = ["full"] }
