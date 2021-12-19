@@ -10,8 +10,9 @@ pub enum Command {
     ///
     /// make sure to use it
     #[replman(alias = "exit")]
-    #[replman(alias = "q")]
+    #[replman(starts_with = "q")]
     Quit,
+    Quote,
     NamedArg {
         left: usize,
         right: usize,
@@ -40,6 +41,9 @@ async fn main() -> anyhow::Result<()> {
         match command {
             Command::Help => println!("{}", Command::help()),
             Command::Quit => break,
+            Command::Quote => {
+                println!("Veni, Vidi, Vici");
+            }
             cmd => println!("{:?}", cmd),
         }
     }
