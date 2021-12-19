@@ -310,7 +310,7 @@ dependencies = [
  "difference",
  "indoc",
  "pretty_assertions",
- "replman_derive 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "replman_derive 0.1.0",
  "rustyline",
  "test-case",
 ]
@@ -330,7 +330,7 @@ dependencies = [
 name = "replman_derive"
 version = "0.1.0"
 dependencies = [
- "replman_derive_impl 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "replman_derive_impl 0.1.0",
  "syn",
 ]
 

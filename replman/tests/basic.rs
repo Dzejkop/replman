@@ -42,13 +42,13 @@ fn help_test() {
         quit|exit - Exits the program
 
                     make sure to use it
-        named_args
-        unnamed_args
-        optional_arg
-        with_default_value - A command with a single argument that has a default (type based) value
-                             Lorem ipsum
-        with_default_explicit - A command with a single argument that has a default value
-        str
+        named_args <left> <right>
+        unnamed_args <0> <1>
+        optional_arg <first_arg> <optional_arg>
+        with_default_value <with_default_value> - A command with a single argument that has a default (type based) value
+                                                  Lorem ipsum
+        with_default_explicit <with_default_explicit> - A command with a single argument that has a default value
+        str <0>
     "#};
 
     assert_diff!(HELP, Command::help(), "", 0);

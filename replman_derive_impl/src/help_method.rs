@@ -25,6 +25,24 @@ pub fn derive_help_method(
 
         write!(&mut help_line, "{}", variant_name_str);
 
+        match &variant.fields {
+            syn::Fields::Named(named_args) => {
+                for arg in &named_args.named {
+                    write!(
+                        &mut help_line,
+                        " <{}>",
+                        arg.ident.as_ref().unwrap()
+                    );
+                }
+            }
+            syn::Fields::Unnamed(unnamed) => {
+                for (idx, _) in unnamed.unnamed.iter().enumerate() {
+                    write!(&mut help_line, " <{}>", idx);
+                }
+            }
+            _ => (),
+        }
+
         if !doc_lines.is_empty() {
             write!(&mut help_line, " - ");
 
