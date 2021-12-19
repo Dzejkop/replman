@@ -38,8 +38,14 @@ fn variant_matches<'a>(
         let variant_name = &variant.ident;
         let variant_attributes = VariantAttributes::extract(&variant.attrs);
         let effective_variant_name = effective_variant_name(variant, attrs, &variant_attributes);
-        // TODO: Handle aliases
-        let effective_variant_name = effective_variant_name.main_name;
+
+        let main_name = &effective_variant_name.main_name;
+        let variant_match = if effective_variant_name.aliases.is_empty() {
+            quote!(#main_name)
+        } else {
+            let aliases = &effective_variant_name.aliases;
+            quote!(#main_name | #(#aliases)|*)
+        };
 
         match &variant.fields {
             Fields::Named(named) => {
@@ -65,7 +71,7 @@ fn variant_matches<'a>(
                 });
 
                 parse_quote! {
-                    #effective_variant_name => {
+                    #variant_match => {
                         Ok(Self::#variant_name {
                             #(#field_parses)*
                         })
@@ -74,7 +80,7 @@ fn variant_matches<'a>(
             }
             Fields::Unit => {
                 parse_quote! {
-                    #effective_variant_name => { Ok(Self::#variant_name) }
+                    #variant_match => { Ok(Self::#variant_name) }
                 }
             }
             Fields::Unnamed(unnamed) => {
@@ -85,7 +91,7 @@ fn variant_matches<'a>(
                 });
 
                 parse_quote! {
-                    #effective_variant_name => {
+                    #variant_match => {
                         Ok(Self::#variant_name(
                             #(#field_parses)*
                         ))

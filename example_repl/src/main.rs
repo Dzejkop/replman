@@ -8,6 +8,7 @@ pub enum Command {
     /// Exits the program
     ///
     /// make sure to use it
+    #[replman(alias = "exit")]
     Quit,
     NamedArg {
         left: usize,

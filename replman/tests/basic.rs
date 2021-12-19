@@ -54,6 +54,14 @@ fn help_test() {
     assert_diff!(HELP, Command::help(), "", 0);
 }
 
+#[test_case("quit")]
+#[test_case("exit")]
+fn handles_aliases(s: &str) {
+    let cmd = Command::parse_str(s).unwrap();
+
+    assert_eq!(Command::Quit, cmd);
+}
+
 #[test]
 fn named_args() {
     let cmd = Command::parse_str("named_args 1 2").unwrap();
