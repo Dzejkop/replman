@@ -21,6 +21,7 @@ enum Command {
         optional_arg: Option<u32>,
     },
     /// A command with a single argument that has a default (type based) value
+    /// Lorem ipsum
     WithDefaultValue {
         #[replman(default)]
         with_default_value: u32,
@@ -44,6 +45,7 @@ fn help_test() {
         unnamed_args
         optional_arg
         with_default_value - A command with a single argument that has a default (type based) value
+                             Lorem ipsum
         with_default_explicit - A command with a single argument that has a default value
         str
     "#};
