@@ -11,6 +11,9 @@ categories = ["repl", "command line"]
 keywords = ["repl", "replman", "rustyline"]
 include = ["../README.md", "../LICENSE"]
 
+[lib]
+path = "lib.rs"
+
 [dependencies]
 proc-macro2 = "1.0"
 syn = { version = "1.0", features = ["full", "extra-traits"] }
