@@ -66,14 +66,14 @@ fn variant_matches(
 
                     match field_attributes.default {
                         field_attributes::FieldDefault::None => quote! {
-                            #ident: ::replman::ReplCmdParse::parse(parts.next().transpose()?)?,
+                            #ident: ::replman::ReplmanParse::parse(parts.next().transpose()?)?,
                         },
                         field_attributes::FieldDefault::Some(default_value) => quote! {
-                            #ident: ::replman::ReplCmdParse::parse_default(parts.next().transpose()?.unwrap_or(#default_value))?,
+                            #ident: ::replman::ReplmanParse::parse_default(parts.next().transpose()?.unwrap_or(#default_value))?,
                         },
                         field_attributes::FieldDefault::Default => quote! {
                             #ident: match parts.next() {
-                                Some(s) => ::replman::ReplCmdParse::parse_default(s?)?,
+                                Some(s) => ::replman::ReplmanParse::parse_default(s?)?,
                                 None => Default::default(),
                             },
                         },
@@ -92,7 +92,7 @@ fn variant_matches(
             Fields::Unnamed(unnamed) => {
                 let field_parses = unnamed.unnamed.iter().map(|_| {
                     quote! {
-                        ::replman::ReplCmdParse::parse(parts.next().transpose()?)?,
+                        ::replman::ReplmanParse::parse(parts.next().transpose()?)?,
                     }
                 });
 

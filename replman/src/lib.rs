@@ -1,55 +1,31 @@
 use std::str::FromStr;
 
+use parsing::split_string_unescape;
 use rustyline::Editor;
 
+mod parsing;
+mod repl;
+mod replman;
+
 pub mod prelude {
-    pub use replman_derive::ReplCmd;
+    pub use replman_derive::Replman;
 
-    pub use crate::{read_command, Repl, ReplCmd};
+    pub use crate::repl::Repl;
+    pub use crate::{read_command, Replman};
 }
 
-pub struct Repl {
-    editor: Editor<()>,
-}
-
-impl Repl {
-    #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
-        Self {
-            editor: Editor::new(),
-        }
-    }
-
-    pub fn read_command<R>(&mut self) -> anyhow::Result<R>
-    where
-        R: ReplCmd,
-    {
-        loop {
-            let line = self.editor.readline("> ")?;
-            let trimmed = line.trim();
-
-            if trimmed.is_empty() {
-                continue;
-            }
-
-            match R::parse(split_string_unescape(trimmed)) {
-                Ok(cmd) => {
-                    self.editor.add_history_entry(trimmed);
-                    return Ok(cmd);
-                }
-                Err(err) => eprintln!("Failed to parse command: {}", err),
-            }
-        }
-    }
-}
-
-pub trait ReplCmd {
+/// A trait representing a set of commands with all the REPL related utilities provided
+pub trait Replman {
+    /// Displays the help string for all commands
     fn help() -> &'static str;
+
+    /// Parses the command from an iterator over parts of a string
     fn parse<'a, I>(parts: I) -> anyhow::Result<Self>
     where
         Self: Sized,
         I: Iterator<Item = anyhow::Result<&'a str>> + 'a;
 
+    /// Parses the command from a string
     fn parse_str(s: &str) -> anyhow::Result<Self>
     where
         Self: Sized,
@@ -58,11 +34,14 @@ pub trait ReplCmd {
     }
 }
 
-pub trait ReplCmdParse {
+/// A trait used for parsing repl command arguments
+pub trait ReplmanParse {
+    /// Parses from an iterator item, accepts Option<&str> so that optional fields can "parse" from None
     fn parse(item: Option<&str>) -> anyhow::Result<Self>
     where
         Self: Sized;
 
+    /// Parses a string, used when the value of the cmd is guaranteed to be present (e.g. with #[replman(default)])
     fn parse_default(s: &str) -> anyhow::Result<Self>
     where
         Self: Sized;
@@ -70,7 +49,7 @@ pub trait ReplCmdParse {
 
 macro_rules! impl_with_from_str {
     ($t:ty) => {
-        impl ReplCmdParse for $t {
+        impl ReplmanParse for $t {
             fn parse(item: Option<&str>) -> anyhow::Result<Self>
             where
                 Self: Sized,
@@ -128,7 +107,7 @@ impl_with_from_str!(std::num::NonZeroUsize);
 impl_with_from_str!(std::path::PathBuf);
 impl_with_from_str!(String);
 
-impl<T> ReplCmdParse for Option<T>
+impl<T> ReplmanParse for Option<T>
 where
     T: FromStr,
     anyhow::Error: From<<T as FromStr>::Err>,
@@ -150,7 +129,7 @@ where
 
 pub fn read_command<R>() -> anyhow::Result<R>
 where
-    R: ReplCmd,
+    R: Replman,
 {
     let mut rl = Editor::<()>::new();
 
@@ -165,116 +144,5 @@ where
             Ok(cmd) => return Ok(cmd),
             Err(err) => eprintln!("Failed to parse command: {}", err),
         }
-    }
-}
-
-fn split_string_unescape(
-    mut s: &str,
-) -> impl Iterator<Item = anyhow::Result<&str>> {
-    std::iter::from_fn(move || {
-        if s.is_empty() {
-            return None;
-        }
-
-        let next_unescaped_space = find_next_unescaped_space(s);
-
-        let ret = match next_unescaped_space {
-            Ok(x) => match x {
-                Some(x) => {
-                    let ret = &s[..x];
-                    s = &s[x + 1..];
-
-                    ret
-                }
-                None => {
-                    let temp = s;
-                    s = "";
-
-                    temp
-                }
-            },
-            Err(err) => return Some(Err(err)),
-        };
-
-        Some(Ok(unescape(ret)))
-    })
-}
-
-fn unescape(s: &str) -> &str {
-    if (s.starts_with('"') && s.ends_with('"'))
-        || (s.starts_with('\'') && s.ends_with('\''))
-    {
-        &s[1..s.len() - 1]
-    } else {
-        s
-    }
-}
-
-fn find_next_unescaped_space(s: &str) -> anyhow::Result<Option<usize>> {
-    let mut is_in_double_qoutes = false;
-    let mut is_in_single_quotes = false;
-
-    let mut previous_was_quoted = false;
-    for (idx, c) in s.char_indices() {
-        if previous_was_quoted && c != ' ' {
-            return Err(anyhow::anyhow!(
-                "Invalid command fragment, expected a space or end of string, found '{}'",
-                c
-            ));
-        }
-
-        match c {
-            '"' if !is_in_double_qoutes && !is_in_single_quotes => {
-                is_in_double_qoutes = true
-            }
-            '"' if is_in_double_qoutes => {
-                is_in_double_qoutes = false;
-                previous_was_quoted = true;
-            }
-            '\'' if !is_in_double_qoutes && !is_in_single_quotes => {
-                is_in_single_quotes = true
-            }
-            '\'' if is_in_single_quotes => {
-                is_in_single_quotes = false;
-                previous_was_quoted = true;
-            }
-            _ => previous_was_quoted = false,
-        }
-
-        if is_in_double_qoutes || is_in_single_quotes {
-            continue;
-        }
-
-        if c == ' ' {
-            return Ok(Some(idx));
-        }
-    }
-
-    Ok(None)
-}
-
-#[cfg(test)]
-mod tests {
-    use test_case::test_case;
-
-    use super::*;
-
-    #[test_case("Hello", vec!["Hello"] ; "Single item")]
-    #[test_case("Hello World!", vec!["Hello", "World!"] ; "Two items")]
-    #[test_case("", vec![] ; "Empty")]
-    fn basic(s: &str, exp: Vec<&str>) {
-        let actual: Vec<_> =
-            split_string_unescape(s).map(Result::unwrap).collect();
-        assert_eq!(actual, exp);
-    }
-
-    #[test_case(r#""Hello, World!""#, vec!["Hello, World!"] ; "Single - double quotes")]
-    #[test_case(r#"'Hello, World!'"#, vec!["Hello, World!"] ; "Single - single quotes")]
-    #[test_case(r#"'Hello, World!' "What is going on?""#, vec!["Hello, World!", "What is going on?"] ; "Two items - mixed")]
-    #[test_case(r#""" "" """#, vec!["", "", ""] ; "Sequence of double quotes")]
-    fn escaped(s: &str, exp: Vec<&str>) {
-        let actual: Vec<_> =
-            split_string_unescape(s).map(Result::unwrap).collect();
-        assert_eq!(actual, exp);
     }
 }

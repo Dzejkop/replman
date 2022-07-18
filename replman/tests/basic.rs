@@ -2,7 +2,7 @@ use difference::assert_diff;
 use replman::prelude::*;
 use test_case::test_case;
 
-#[derive(PartialEq, Debug, ReplCmd)]
+#[derive(PartialEq, Debug, Replman)]
 #[replman(rename_all = "snake_case")]
 enum Command {
     /// Displays help

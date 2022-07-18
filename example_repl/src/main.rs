@@ -1,39 +1,27 @@
 use replman::prelude::*;
 
-#[derive(PartialEq, Debug, ReplCmd)]
+#[derive(PartialEq, Debug, Replman)]
 #[replman(rename_all = "snake_case")]
 pub enum Command {
     /// Displays help
     #[replman(alias = "h")]
     Help,
     /// Exits the program
-    ///
-    /// make sure to use it
     #[replman(alias = "exit")]
     #[replman(starts_with = "q")]
     Quit,
-    Quote,
-    NamedArg {
-        left: usize,
-        right: usize,
+    /// Returns left + right
+    Add {
+        left: i64,
+        right: i64,
     },
-    UnnamedArgs(usize, usize),
-    OptionalArg {
-        first_arg: String,
-        optional_arg: Option<u32>,
-    },
-    WithDefaultValue {
-        #[replman(default)]
-        with_default_value: u32,
-    },
-    WithDefaultExplicit {
-        #[replman(default = "42")]
-        with_default_explicit: u32,
+    Mul {
+        left: i64,
+        right: i64,
     },
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let mut repl = Repl::new();
     loop {
         let command: Command = repl.read_command()?;
@@ -41,10 +29,12 @@ async fn main() -> anyhow::Result<()> {
         match command {
             Command::Help => println!("{}", Command::help()),
             Command::Quit => break,
-            Command::Quote => {
-                println!("Veni, Vidi, Vici");
+            Command::Add { left, right } => {
+                println!("{} + {} = {}", left, right, left + right)
             }
-            cmd => println!("{:?}", cmd),
+            Command::Mul { left, right } => {
+                println!("{} * {} = {}", left, right, left * right)
+            }
         }
     }
 
